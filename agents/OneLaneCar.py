@@ -8,13 +8,15 @@ The agent only sees the cars directly in front and behind him.
 
 We will assume that all drivers want to accelerate to the maximum speed all the time.
 """
-
+import numpy as np
 
 # Dumb drivers don't take into account the speed of the car's in front of them.
 class OneLaneCar:
 
     # Create a new dumb driver. 
-    def __init__(self, extra_name = "", max_acc = 1, min_acc = -1, max_speed = 1, safe_dist = 1, mode="safe", accident_dist = 0.5):
+    def __init__(self, extra_name = "", max_acc = 1, min_acc = -1, max_speed = 1, safe_dist = 1, 
+                 mode="safe", accident_dist = 0.5):
+        
         self.name = "Dumb" + extra_name
 
         # Limit the max acceleration and decceleration of the car
@@ -46,7 +48,7 @@ class OneLaneCar:
 
     #   The risky driver will behave in a similar way to the dumb driver but he will take into account
     #   the front_car speed to brake.
-    def step(self, dt, length, front_car, back_car = False):
+    def step(self, dt, length, front_car, back_car = False, noise = False):
         
         # Compute the distance between the cars
         dist = front_car.pos - self.pos
@@ -57,6 +59,11 @@ class OneLaneCar:
         if (dist < self.accident_dist):
             self.speed = 0
             return self.pos, True, False
+        
+        # Introduce noise in to the reading
+        if (noise and noise["read"]):
+            if (np.random.rand() < noise["read"]["prob"]):
+                dist += (np.random.rand()*2-1) * noise["read"]["mag"]
 
         # Compute what would happen if the front car didn't move.
         next_dist = dist - self.speed * dt
@@ -67,7 +74,7 @@ class OneLaneCar:
             # Dumb mode
             if (self.mode == "safe"):
                 self.acc = self.min_acc
-            elif (self.mode == "risky"):
+            elif (self.mode == "smart"):
                 # This would be the code for a smarter car, that just brakes enough not to collide
                 # Deccelerate
                     # dist - speed * dt = safe_dist --> speed = (dist - safe_dist)/dt
@@ -77,11 +84,20 @@ class OneLaneCar:
 
                 # Limit acceleration 
                 self.acc = max(min(target_acc, self.max_acc), self.min_acc)
-                
 
         # Otherwise, accelerate to the maximum
         else:
             self.acc = self.max_acc
+
+        
+        # introduce noise into the writting
+        if (noise and noise["write"]):
+            # Randomly brake completely
+            if (np.random.rand() < noise["write"]["brake_prob"]):
+                self.acc = self.min_acc
+            # Otherwise, random fluctuations
+            elif (np.random.rand() < noise["write"]["prob"]):
+                self.acc += (np.random.rand()*2-1) * noise["write"]["mag"]
         
         # update speed
         self.speed = self.speed + self.acc

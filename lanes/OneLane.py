@@ -6,10 +6,12 @@ import numpy as np
 class OneLane:
 
     def __init__(self, length, n_cars, car_types, car_constructor, safe_dist=1, accident_dist=0.5, 
-                 max_speed = 1, max_acc = 1, min_acc = -1, extra_name = ""):
+                 max_speed = 1, max_acc = 1, min_acc = -1, noise_read = 0, noise_write = 0, extra_name = "",
+                 noise = False):
         
         self.name = "One lane" + extra_name
         self.length = length
+        self.noise = noise
 
         self.cars = []
 
@@ -33,7 +35,7 @@ class OneLane:
                 # Add car to list of cars
                 self.cars.append(car)
                 car_index += 1
-    
+
 
     def step(self, dt):
         positions = np.zeros((self.total_cars, ))
@@ -44,7 +46,7 @@ class OneLane:
             front_car = self.cars[(i+1) % self.total_cars]
             back_car = self.cars[(i-1) % self.total_cars]
 
-            positions[i], accident, looped = self.cars[i].step(dt, self.length, front_car, back_car)
+            positions[i], accident, looped = self.cars[i].step(dt, self.length, front_car, back_car, self.noise)
             
             if (accident):
                 n_accidents += 1

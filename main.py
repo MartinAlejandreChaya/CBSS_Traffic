@@ -1,72 +1,113 @@
-from graphics import *
-import time
+"""
+Code to run some experiments.
+"""
+
+from simulator import *
 
 from lanes.OneLane import OneLane
 from agents.OneLaneCar import OneLaneCar
 
 import numpy as np
 
-def simulate_lane(lane, steps, dt, width, height, frame_rate):
+def test_normal():
 
-    # Create window
-    win = GraphWin(lane.name, width, height)
+    # ----
+    # For one lane of safe drivers. No noise. Displays phantom jams.
+    # The max speed is a  bit less than the safe_dist, and the accident dist is about 1/3 of safe_dist.
+    lane = OneLane(length=1000, n_cars=[50], car_types=["safe"], car_constructor=OneLaneCar,
+                safe_dist = 10, accident_dist = 3, max_speed = 9, max_acc=1, min_acc=-4, extra_name=" - safe cars")
 
-    frame_time = 60/frame_rate
+    simulate_lane(lane, steps=200, dt=0.2, width=900, height=100, frame_rate=60*60)
+    # ----
 
-    width_transform = width / lane.length
-    height_mid = height/2
+    # ----
+    # For one lane of risky drivers. No noise. Displays good traffic flux.
+    # The max speed is a  bit less than the safe_dist, and the accident dist is about 1/3 of safe_dist.
+    lane = OneLane(length=1000, n_cars=[50], car_types=["smart"], car_constructor=OneLaneCar,
+                safe_dist = 10, accident_dist = 3, max_speed = 9, max_acc=1, min_acc=-4, extra_name = " - risky cars")
 
-    # Create a circle for each car
-    circles = []
-    for i in range(lane.total_cars):
-        # Create circle at car position
-        circ = Circle(Point(lane.cars[i].pos * width_transform, height_mid), 5)
-        circ.setFill(color_rgb(51, 51, 51))
+    simulate_lane(lane, steps=200, dt=0.2, width=900, height=100, frame_rate=60*60)
+    # ----
 
-        # Draw circle
-        circ.draw(win)
-        circles.append(circ)
+def test_noise():
+    # ----
+    # For one lane of safe drivers. With no noise. Displays fluid traffic.
+    # The max speed is a  bit less than the safe_dist, and the accident dist is about 1/3 of safe_dist.
+    lane = OneLane(length=1000, n_cars=[35], car_types=["safe"], car_constructor=OneLaneCar,
+                safe_dist = 10, accident_dist = 3, max_speed = 9, max_acc=1, min_acc=-4, 
+                extra_name=" - safe cars (no noise)", noise = False)
 
-    total_flux = 0
-    total_accidents = 0
-    input("Press enter to start animation")
-    for i in range(steps):
-        # Get the ammount moved by each car
-        positions, n_accidents, flux = lane.step(dt + width_transform)
-        
-        # Redraw all car circles
-        for j in range(lane.total_cars):
-            dx = positions[j] * width_transform - circles[j].getCenter().getX()
-            circles[j].move(dx, 0)
+    simulate_lane(lane, steps=200, dt=0.2, width=900, height=100, frame_rate=60*60)
+    # ----
 
-        total_flux += flux
-        total_accidents += n_accidents
+    # ----
+    # For one lane of safe drivers. With writting noise. Displays fluid traffic.
+    # The max speed is a  bit less than the safe_dist, and the accident dist is about 1/3 of safe_dist.
+    noise = {
+        "write": {"prob": 0.05, "brake_prob": 0., "mag": 0.3},
+        "read": False
+    }
+    lane = OneLane(length=1000, n_cars=[35], car_types=["safe"], car_constructor=OneLaneCar,
+                safe_dist = 10, accident_dist = 3, max_speed = 9, max_acc=1, min_acc=-4, 
+                extra_name=" - safe cars (writting noise)", noise = noise)
 
-        time.sleep(frame_time)
+    simulate_lane(lane, steps=200, dt=0.2, width=900, height=100, frame_rate=60*60)
+    # ----
 
-    print("\nLane: ", lane.name)
-    print("Total flux: ", total_flux)
-    print("Total accidents: ", total_accidents)
+     # ----
+    # For one lane of safe drivers. With random brakes. Displays phantom jams.
+    # The max speed is a  bit less than the safe_dist, and the accident dist is about 1/3 of safe_dist.
+    noise = {
+        "write": {"prob": 0.0, "brake_prob": 0.02, "mag": 0.},
+        "read": False
+    }
+    lane = OneLane(length=1000, n_cars=[35], car_types=["safe"], car_constructor=OneLaneCar,
+                safe_dist = 10, accident_dist = 3, max_speed = 9, max_acc=1, min_acc=-4, 
+                extra_name=" - safe cars (random brakes)", noise = noise)
 
-    input("\nPress enter to close the window")
-    win.close()    # Close window when done
+    simulate_lane(lane, steps=200, dt=0.2, width=900, height=100, frame_rate=60*60)
+    # ----
+
+def test_noise_smart():
+    # ----
+    # For one lane of safe drivers. With no noise. Displays fluid traffic.
+    # The max speed is a  bit less than the safe_dist, and the accident dist is about 1/3 of safe_dist.
+    lane = OneLane(length=1000, n_cars=[35], car_types=["smart"], car_constructor=OneLaneCar,
+                safe_dist = 10, accident_dist = 3, max_speed = 9, max_acc=1, min_acc=-4, 
+                extra_name=" - smart cars (no noise)", noise = False)
+
+    simulate_lane(lane, steps=200, dt=0.2, width=900, height=100, frame_rate=60*60)
+    # ----
+
+    # ----
+    # For one lane of safe drivers. With writting noise. Displays fluid traffic.
+    # The max speed is a  bit less than the safe_dist, and the accident dist is about 1/3 of safe_dist.
+    noise = {
+        "write": {"prob": 0.05, "brake_prob": 0., "mag": 0.3},
+        "read": False
+    }
+    lane = OneLane(length=1000, n_cars=[35], car_types=["smart"], car_constructor=OneLaneCar,
+                safe_dist = 10, accident_dist = 3, max_speed = 9, max_acc=1, min_acc=-4, 
+                extra_name=" - smart cars (writting noise)", noise = noise)
+
+    simulate_lane(lane, steps=200, dt=0.2, width=900, height=100, frame_rate=60*60)
+    # ----
+
+     # ----
+    # For one lane of safe drivers. With random brakes. Displays phantom jams that are quickly disperssed but with accidents.
+    # The max speed is a  bit less than the safe_dist, and the accident dist is about 1/3 of safe_dist.
+    noise = {
+        "write": {"prob": 0.0, "brake_prob": 0.02, "mag": 0.},
+        "read": False
+    }
+    lane = OneLane(length=1000, n_cars=[35], car_types=["smart"], car_constructor=OneLaneCar,
+                safe_dist = 10, accident_dist = 3, max_speed = 9, max_acc=1, min_acc=-4, 
+                extra_name=" - smart cars (random brakes)", noise = noise)
+
+    simulate_lane(lane, steps=200, dt=0.2, width=900, height=100, frame_rate=60*60)
+    # ----
 
 
-
-# ----
-# For one lane of safe drivers. No noise. Displays phantom jams.
-# The max speed is a  bit less than the safe_dist, and the accident dist is about 1/3 of safe_dist.
-lane = OneLane(length=1000, n_cars=[50], car_types=["safe"], car_constructor=OneLaneCar,
-               safe_dist = 10, accident_dist = 3, max_speed = 9, max_acc=1, min_acc=-4, extra_name=" - safe cars")
-
-simulate_lane(lane, steps=200, dt=0.2, width=900, height=100, frame_rate=60*60)
-# ----
-
-# ----
-# For one lane of risky drivers. No noise. Displays good traffic flux.
-# The max speed is a  bit less than the safe_dist, and the accident dist is about 1/3 of safe_dist.
-lane = OneLane(length=1000, n_cars=[50], car_types=["risky"], car_constructor=OneLaneCar,
-               safe_dist = 10, accident_dist = 3, max_speed = 9, max_acc=1, min_acc=-4, extra_name = " - risky cars")
-
-simulate_lane(lane, steps=200, dt=0.2, width=900, height=100, frame_rate=60*60)
-# ----
+# test_normal()
+# test_noise()
+test_noise_smart()
