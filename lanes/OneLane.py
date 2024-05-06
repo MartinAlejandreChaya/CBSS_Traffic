@@ -5,9 +5,10 @@ import numpy as np
 
 class OneLane:
 
-    def __init__(self, length, n_cars, car_types, safe_dist=1, max_speed = 1, max_acc = 1, min_acc = -1):
+    def __init__(self, length, n_cars, car_types, car_constructor, safe_dist=1, accident_dist=0.5, 
+                 max_speed = 1, max_acc = 1, min_acc = -1, extra_name = ""):
         
-        self.name = "One lane"
+        self.name = "One lane" + extra_name
         self.length = length
 
         self.cars = []
@@ -19,7 +20,9 @@ class OneLane:
             for j in range(n_cars[i]):
 
                 # Create a new car of the type
-                car = car_types[i](max_speed = max_speed, max_acc = max_acc, min_acc = min_acc, safe_dist = safe_dist)
+                car = car_constructor(max_speed = max_speed, max_acc = max_acc, 
+                                      min_acc = min_acc, safe_dist = safe_dist, 
+                                      accident_dist = accident_dist, mode = car_types[i])
 
                 # Random position for the car
                 rand_pos = np.random.rand()*self.length/self.total_cars + car_index/self.total_cars * self.length
@@ -34,13 +37,21 @@ class OneLane:
 
     def step(self, dt):
         positions = np.zeros((self.total_cars, ))
+        n_accidents, flux = 0, 0
 
         for i in range(self.total_cars):
+
             front_car = self.cars[(i+1) % self.total_cars]
             back_car = self.cars[(i-1) % self.total_cars]
-            positions[i] = self.cars[i].step(dt, self.length, front_car, back_car)
 
-        return positions
+            positions[i], accident, looped = self.cars[i].step(dt, self.length, front_car, back_car)
+            
+            if (accident):
+                n_accidents += 1
+            if (looped):
+                flux += 1
+
+        return positions, n_accidents, flux
     
     def show(self):
 
