@@ -1,0 +1,19 @@
+Add in this file configurations that display some behavior that we might want to display.
+
+# ----
+# For one lane of safe drivers. No noise. Displays phantom jams.
+# The max speed is a  bit less than the safe_dist, and the accident dist is about 1/3 of safe_dist.
+lane = OneLane(length=1000, n_cars=[50], car_types=["safe"], car_constructor=OneLaneCar,
+               safe_dist = 10, accident_dist = 3, max_speed = 9, max_acc=1, min_acc=-4, extra_name=" - safe cars")
+
+simulate_lane(lane, steps=200, dt=0.2, width=900, height=100, frame_rate=60*60)
+# ----
+
+# ----
+# For one lane of risky drivers. No noise. Displays good traffic flux.
+# The max speed is a  bit less than the safe_dist, and the accident dist is about 1/3 of safe_dist.
+lane = OneLane(length=1000, n_cars=[50], car_types=["risky"], car_constructor=OneLaneCar,
+               safe_dist = 10, accident_dist = 3, max_speed = 9, max_acc=1, min_acc=-4, extra_name = " - risky cars")
+
+simulate_lane(lane, steps=200, dt=0.2, width=900, height=100, frame_rate=60*60)
+# ----
