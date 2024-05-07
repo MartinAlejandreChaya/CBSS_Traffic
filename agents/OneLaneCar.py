@@ -62,6 +62,7 @@ class OneLaneCar:
         
         # The front-car speed
         front_speed = front_car.speed
+        front_acc = front_car.acc
         
         # If it is less than the accident distance, record an accident and brake completely
         if (dist < self.accident_dist):
@@ -73,13 +74,17 @@ class OneLaneCar:
             if (np.random.rand() < noise["read"]["prob"]):
                 dist += (np.random.rand()*2-1) * noise["read"]["mag"]
                 front_speed += (np.random.rand()*2-1) * noise["read"]["sp_mag"]
+                front_acc += (np.random.rand()*2-1) * noise["read"]["acc_mag"]
 
         # Compute what would happen if the front car didn't move.
         next_dist = dist - self.speed * dt
-        # If the driver is risky compute taking into account the other car speed
+        # If the driver is risky compute taking into account the other car speed and acceleration
         if (self.mode == "risky"):
-            next_dist += front_speed * dt
-    
+            # Compute what the speed is going to be in the next time step
+            next_front_speed = front_speed + front_acc * dt
+            next_front_speed = min(max(next_front_speed, self.max_speed), 0)
+            # Average current and next speed.
+            next_dist += (front_speed + next_front_speed)/2 * dt
 
         # If the distance is going to be less than the safe distance full brake.
         if (next_dist < self.safe_dist):
