@@ -53,28 +53,41 @@ class OneLaneCar:
         # Compute the distance between the cars
         dist = front_car.pos - self.pos
         if (dist < 0): # The last car to the first car
+            if (-dist / length < 0.5):
+                # Special case, the car surpassed it's front car. this is an accident. brake.
+                accident_in_this_frame = self.speed != 0
+                return self.pos, 0, accident_in_this_frame, False
+            
             dist = length - self.pos + front_car.pos
+        
+        # The front-car speed
+        front_speed = front_car.speed
         
         # If it is less than the accident distance, record an accident and brake completely
         if (dist < self.accident_dist):
-            self.speed = 0
-            return self.pos, True, False
+            accident_in_this_frame = self.speed != 0
+            return self.pos, 0, accident_in_this_frame, False
         
         # Introduce noise in to the reading
         if (noise and noise["read"]):
             if (np.random.rand() < noise["read"]["prob"]):
                 dist += (np.random.rand()*2-1) * noise["read"]["mag"]
+                front_speed += (np.random.rand()*2-1) * noise["read"]["sp_mag"]
 
         # Compute what would happen if the front car didn't move.
         next_dist = dist - self.speed * dt
+        # If the driver is risky compute taking into account the other car speed
+        if (self.mode == "risky"):
+            next_dist += front_speed * dt
+    
 
         # If the distance is going to be less than the safe distance full brake.
         if (next_dist < self.safe_dist):
 
             # Dumb mode
             if (self.mode == "safe"):
-                self.acc = self.min_acc
-            elif (self.mode == "smart"):
+                target_acc = self.min_acc
+            elif (self.mode == "smart" or self.mode == "risky"):
                 # This would be the code for a smarter car, that just brakes enough not to collide
                 # Deccelerate
                     # dist - speed * dt = safe_dist --> speed = (dist - safe_dist)/dt
@@ -82,13 +95,12 @@ class OneLaneCar:
                 target_speed = (dist - self.safe_dist) / dt
                 target_acc = (target_speed - self.speed)/dt
 
-                # Limit acceleration 
-                self.acc = max(min(target_acc, self.max_acc), self.min_acc)
-
         # Otherwise, accelerate to the maximum
         else:
-            self.acc = self.max_acc
+            target_acc = self.max_acc
 
+        # Limit acceleration 
+        self.acc = max(min(target_acc, self.max_acc), self.min_acc)
         
         # introduce noise into the writting
         if (noise and noise["write"]):
@@ -100,16 +112,26 @@ class OneLaneCar:
                 self.acc += (np.random.rand()*2-1) * noise["write"]["mag"]
         
         # update speed
-        self.speed = self.speed + self.acc
+        target_speed = self.speed + self.acc * dt
+
         # limit speed
-        self.speed = max(min(self.speed, self.max_speed), 0)
+        target_speed = max(min(target_speed, self.max_speed), 0)
 
         # Update position
-        self.pos = self.pos + self.speed
+        target_pos = self.pos + target_speed * dt
         # If we surpassed the length of the lane, loop back to the beggining
-        looped = self.pos > length
+        looped = target_pos > length
         if (looped):
-            self.pos -= length
-        
-        return self.pos, False, looped
+            target_pos -= length
+            
+        return target_pos, target_speed, False, looped
 
+    def get_color(self):
+
+        if (self.mode == "safe"):
+            return 81, 231, 101
+        elif (self.mode == "smart"):
+            return 81, 101, 231
+        elif (self.mode == "risky"):
+            return 231, 81, 101
+        return 51, 51, 51

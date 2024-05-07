@@ -107,7 +107,66 @@ def test_noise_smart():
     simulate_lane(lane, steps=200, dt=0.2, width=900, height=100, frame_rate=60*60)
     # ----
 
+def test_risky():
+    # ----
+    # For one lane of risky drivers. No noise. Displays very good traffic flux.
+    # The max speed is a  bit less than the safe_dist, and the accident dist is about 1/3 of safe_dist.
+    lane = OneLane(length=1000, n_cars=[70], car_types=["smart"], car_constructor=OneLaneCar,
+                safe_dist = 10, accident_dist = 3, max_speed = 15, max_acc=3, min_acc=-12, extra_name = " - risky cars")
+
+    simulate_lane(lane, steps=200, dt=0.5, width=900, height=100, frame_rate=120)
+    # ----
+
+    # ----
+    # For one lane of risky drivers. No noise. Displays very good traffic flux.
+    # The max speed is a  bit less than the safe_dist, and the accident dist is about 1/3 of safe_dist.
+    lane = OneLane(length=1000, n_cars=[70], car_types=["risky"], car_constructor=OneLaneCar,
+                safe_dist = 10, accident_dist = 3, max_speed = 15, max_acc=3, min_acc=-12, extra_name = " - risky cars")
+
+    simulate_lane(lane, steps=200, dt=0.5, width=900, height=100, frame_rate=120)
+    # ----
+
+    # ----
+    # For one lane of risky drivers. With noise only for distance. Displays some accidents and jams.
+    # The max speed is a  bit less than the safe_dist, and the accident dist is about 1/3 of safe_dist.
+    noise = {
+        "write": False,
+        "read": {"prob": 0.03, "mag": 3, "sp_mag": 0}
+    }
+    lane = OneLane(length=1000, n_cars=[70], car_types=["risky"], car_constructor=OneLaneCar,
+                safe_dist = 10, accident_dist = 3, max_speed = 9, max_acc=3, min_acc=-12, 
+                extra_name = " - risky cars", noise=noise)
+
+    simulate_lane(lane, steps=200, dt=0.5, width=900, height=100, frame_rate=120)
+    # ----
+
+    # ----
+    # For one lane of risky drivers. With noise for distance and speed. Displays some accidents and jams.
+    # The max speed is a  bit less than the safe_dist, and the accident dist is about 1/3 of safe_dist.
+    noise = {
+        "write": False,
+        "read": {"prob": 0.03, "mag": 2, "sp_mag": 2}
+    }
+    lane = OneLane(length=1000, n_cars=[70], car_types=["risky"], car_constructor=OneLaneCar,
+                safe_dist = 10, accident_dist = 3, max_speed = 9, max_acc=3, min_acc=-12, 
+                extra_name = " - risky cars", noise = noise)
+
+    simulate_lane(lane, steps=200, dt=0.5, width=900, height=100, frame_rate=120)
+    # ----
+
+def test_mixed():
+    # ----
+    # For one lane of mixed drivers. No noise.
+    # The max speed is a  bit less than the safe_dist, and the accident dist is about 1/3 of safe_dist.
+    lane = OneLane(length=1000, n_cars=[20, 25, 25], car_types=["smart", "risky", "safe"], car_constructor=OneLaneCar,
+                safe_dist = 10, accident_dist = 3, max_speed = 9, max_acc=3, min_acc=-12, extra_name = " - mixed cars")
+
+    simulate_lane(lane, steps=200, dt=0.5, width=1200, height=100, frame_rate=120)
+    # ----
 
 # test_normal()
 # test_noise()
-test_noise_smart()
+# test_noise_smart()
+test_risky()
+test_mixed()
+

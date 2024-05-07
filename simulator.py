@@ -10,7 +10,7 @@ def simulate_lane(lane, steps, dt, width, height, frame_rate):
     # Create window
     win = GraphWin(lane.name, width, height)
 
-    frame_time = 60/frame_rate
+    frame_time = 1/frame_rate
 
     width_transform = width / lane.length
     height_mid = height/2
@@ -20,7 +20,7 @@ def simulate_lane(lane, steps, dt, width, height, frame_rate):
     for i in range(lane.total_cars):
         # Create circle at car position
         circ = Circle(Point(lane.cars[i].pos * width_transform, height_mid), 5)
-        circ.setFill(color_rgb(51, 51, 51))
+        circ.setFill(color_rgb(*lane.cars[i].get_color()))
 
         # Draw circle
         circ.draw(win)
@@ -31,7 +31,7 @@ def simulate_lane(lane, steps, dt, width, height, frame_rate):
     input("Press enter to start animation")
     for i in range(steps):
         # Get the ammount moved by each car
-        positions, n_accidents, flux = lane.step(dt + width_transform)
+        positions, speeds, n_accidents, flux = lane.step(dt)
         
         # Redraw all car circles
         for j in range(lane.total_cars):

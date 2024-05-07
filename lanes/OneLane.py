@@ -39,24 +39,26 @@ class OneLane:
 
     def step(self, dt):
         positions = np.zeros((self.total_cars, ))
+        speeds = np.zeros((self.total_cars, ))
         n_accidents, flux = 0, 0
 
+        # Simulate front-to-back
         for i in range(self.total_cars):
-
+            
             front_car = self.cars[(i+1) % self.total_cars]
             back_car = self.cars[(i-1) % self.total_cars]
 
-            positions[i], accident, looped = self.cars[i].step(dt, self.length, front_car, back_car, self.noise)
+            positions[i], speeds[i], accident, looped = self.cars[i].step(dt, self.length, front_car, back_car, self.noise)
             
             if (accident):
                 n_accidents += 1
             if (looped):
                 flux += 1
-
-        return positions, n_accidents, flux
-    
-    def show(self):
-
-        print("One lane of dumb cars")
+        
+        # Assign new positions and speeds
         for i in range(self.total_cars):
-            print(i, self.cars[i].pos, self.cars[i].speed)
+            self.cars[i].pos = positions[i]
+            self.cars[i].speed = speeds[i]
+
+        return positions, speeds, n_accidents, flux
+
