@@ -62,7 +62,6 @@ class OneLaneCar:
         
         # The front-car speed
         front_speed = front_car.speed
-        front_acc = front_car.acc
         
         # If it is less than the accident distance, record an accident and brake completely
         if (dist < self.accident_dist):
@@ -74,39 +73,58 @@ class OneLaneCar:
             if (np.random.rand() < noise["read"]["prob"]):
                 dist += (np.random.rand()*2-1) * noise["read"]["mag"]
                 front_speed += (np.random.rand()*2-1) * noise["read"]["sp_mag"]
-                front_acc += (np.random.rand()*2-1) * noise["read"]["acc_mag"]
 
-        # Compute what would happen if the front car didn't move.
-        next_dist = dist - self.speed * dt
-        # If the driver is risky compute taking into account the other car speed and acceleration
-        if (self.mode == "risky"):
-            # Compute what the speed is going to be in the next time step
-            next_front_speed = front_speed + front_acc * dt
-            next_front_speed = min(max(next_front_speed, self.max_speed), 0)
-            # Average current and next speed.
-            next_dist += (front_speed + next_front_speed)/2 * dt
 
-        # If the distance is going to be less than the safe distance full brake.
-        if (next_dist < self.safe_dist):
-
-            # Dumb mode
-            if (self.mode == "safe"):
+        if (self.mode == "safe"):
+            # Compute what the next distance would be if the front car didn't move.
+            next_dist = dist - self.speed * dt
+            # If it is less than the safe distance, brake completely
+            if (next_dist < self.safe_dist):
                 target_acc = self.min_acc
-            elif (self.mode == "smart" or self.mode == "risky"):
-                # This would be the code for a smarter car, that just brakes enough not to collide
-                # Deccelerate
-                    # dist - speed * dt = safe_dist --> speed = (dist - safe_dist)/dt
-                    # new_speed  = speed + acc*dt  --> acc =  -speed/dt 
-                target_speed = (dist - self.safe_dist) / dt
-                target_acc = (target_speed - self.speed)/dt
+            # Otherwise, accelerate completely.
+            else:
+                target_acc = self.max_acc
+        
+        elif (self.mode == "smart" or self.mode == "risky"):
+            # Rules:
+                # 1. If we are very far away accelerate to the maximum.
+                # 2. If we are approaching the other car, accelerate to have a
+                # bit more speed than the front car.
+                # 3. If the distance is less than the safe distance, brake just enough to reach the 
+                # safe distance in the following step.
 
-        # Otherwise, accelerate to the maximum
-        else:
-            target_acc = self.max_acc
+                # Extra rule for the risky car: When braking take into account the front-car-speed
+
+            # Rule 1
+            if (dist > 3 * self.safe_dist):
+                target_acc = self.max_acc
+            # Rule 2
+            elif (dist > self.safe_dist):
+                if (self.speed < 0.3 * self.max_speed):
+                    target_acc = self.max_acc
+                else:
+                    # front_speed * 1.1 = speed + acc*dt
+                    target_acc = (front_speed * 1.1 - self.speed) / dt
+            # Rule 3
+            else:
+                # Brake to be at safe_dist. For the smart car (that doesn't take into
+                # account the front car speed), this is just a total brake.
+                if (self.mode == "smart"):
+                    target_acc = self.min_acc
+
+                # For the risky car we want to brake just enough because we know the speed of
+                # the car in front of us.
+                else:
+                    # If he is going faster than us, try to almost match it's speed
+                    if (front_speed > self.speed):
+                        target_acc = (front_speed*0.9 - self.speed ) / dt
+                    # If he is going slowlier than us we want to brake but not completely
+                    else:
+                        target_acc = (front_speed * 0.5 - self.speed) / dt
 
         # Limit acceleration 
         self.acc = max(min(target_acc, self.max_acc), self.min_acc)
-        
+
         # introduce noise into the writting
         if (noise and noise["write"]):
             # Randomly brake completely

@@ -167,6 +167,20 @@ def test_mixed():
 # test_normal()
 # test_noise()
 # test_noise_smart()
-test_risky()
-test_mixed()
+# test_risky()
+# test_mixed()
 
+# ----
+# One lane of smart cars. This is enough cars so that there will be phantom jams without the need of noise.
+lane = OneLane(length=700, n_cars=[50], car_types=["smart"], car_constructor=OneLaneCar,
+            safe_dist = 10, accident_dist = 3, max_speed = 6, max_acc=0.5, min_acc=-4, extra_name = " - smart cars")
+
+simulate_lane(lane, steps=200, dt=1, width=900, height=100, frame_rate=120)
+# ----
+
+# ----
+lane = OneLane(length=700, n_cars=[50], car_types=["risky"], car_constructor=OneLaneCar,
+            safe_dist = 10, accident_dist = 3, max_speed = 6, max_acc=0.5, min_acc=-4, extra_name = " - risky cars")
+
+simulate_lane(lane, steps=200, dt=1, width=900, height=100, frame_rate=120)
+# ----
