@@ -36,6 +36,13 @@ class OneLane:
                 self.cars.append(car)
                 car_index += 1
 
+    def get_positions(self):
+        positions = np.zeros((self.total_cars, ))
+
+        for i in range(self.total_cars):
+            positions[i] = self.cars[i].pos
+        
+        return positions
 
     def step(self, dt):
         positions = np.zeros((self.total_cars, ))

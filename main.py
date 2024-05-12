@@ -170,6 +170,7 @@ def test_mixed():
 # test_risky()
 # test_mixed()
 
+"""
 # ----
 # One lane of smart cars. This is enough cars so that there will be phantom jams without the need of noise.
 lane = OneLane(length=700, n_cars=[50], car_types=["smart"], car_constructor=OneLaneCar,
@@ -184,3 +185,34 @@ lane = OneLane(length=700, n_cars=[50], car_types=["risky"], car_constructor=One
 
 simulate_lane(lane, steps=200, dt=1, width=900, height=100, frame_rate=120)
 # ----
+"""
+
+lane = OneLane(length=700, n_cars=[50], car_types=["smart"], car_constructor=OneLaneCar,
+            safe_dist = 10, accident_dist = 3, max_speed = 6, max_acc=0.5, min_acc=-4, extra_name = " - smart cars")
+
+# Phantom jams
+plot_positions(100, 1, lane)
+plot_average_speed(100, 1, lane)
+
+max_speeds = [3 + i/20*10 for i in range(20)]
+fluxes = np.zeros((len(max_speeds),))
+accidents = np.zeros((len(max_speeds),))
+for i, sp in enumerate(max_speeds):
+    
+    # Set all cars max speed to sp
+    for car in lane.cars:
+        car.max_speed = sp
+    
+    # Simulate lane
+    flux, accs = flux_and_accidents(50, 1, lane)
+
+    print("Flux and accidents for speed: ", sp, flux, accs)
+    fluxes[i] = flux
+    accidents[i] = accs
+
+plt.plot(max_speeds, fluxes)
+plt.title("Flux")
+plt.show()
+plt.plot(max_speeds, accidents)
+plt.title("Accidents")
+plt.show()

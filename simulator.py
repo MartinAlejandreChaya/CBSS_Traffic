@@ -3,6 +3,8 @@ Code to simulate lanes of traffic
 """
 
 from graphics import *
+import numpy as np
+from matplotlib import pyplot as plt
 import time
 
 def simulate_lane(lane, steps, dt, width, height, frame_rate):
@@ -50,3 +52,60 @@ def simulate_lane(lane, steps, dt, width, height, frame_rate):
     input("\nPress enter to close the window")
     win.close()    # Close window when done
 
+
+
+def plot_positions(steps, dt, lane):
+
+    t = 0
+    prev_positions = lane.get_positions()
+
+    for i in range(steps):
+
+        t += dt
+
+        # Get the ammount moved by each car
+        positions, speeds, n_accidents, flux = lane.step(dt)
+
+        # Draw a line for consecutive positions of the cars.
+        for j in range(lane.total_cars):
+            # Skip cars that loop
+            if (positions[j] < prev_positions[j]):
+                continue
+            # Plot line for rest of the cars
+            plt.plot([prev_positions[j], positions[j]], [t-dt, t], 'black')
+        
+        prev_positions = positions
+
+
+    plt.show()
+
+
+
+def plot_average_speed(steps, dt, lane):
+    
+    avg_speeds = np.zeros((steps, ))
+
+    for i in range(steps):
+        # Get the ammount moved by each car
+        positions, speeds, n_accidents, flux = lane.step(dt)
+
+        # Save average speed
+        avg_speeds[i] = np.mean(speeds)
+        
+
+    plt.plot(avg_speeds)
+    plt.show()
+
+def flux_and_accidents(steps, dt, lane):
+
+    total_flux, total_accidents = 0, 0
+
+    for i in range(steps):
+        # Get the ammount moved by each car
+        positions, speeds, n_accidents, flux = lane.step(dt)
+
+        total_accidents += n_accidents
+        total_flux += flux
+
+
+    return total_flux, total_accidents
