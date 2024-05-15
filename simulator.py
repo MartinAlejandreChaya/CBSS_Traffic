@@ -7,6 +7,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 import time
 
+# Animation and n_accidents and total_flux
 def simulate_lane(lane, steps, dt, width, height, frame_rate):
 
     # Create window
@@ -53,7 +54,7 @@ def simulate_lane(lane, steps, dt, width, height, frame_rate):
     win.close()    # Close window when done
 
 
-
+# phantom jams y todo eso
 def plot_positions(steps, dt, lane):
 
     t = 0
@@ -80,7 +81,7 @@ def plot_positions(steps, dt, lane):
     plt.show()
 
 
-
+# X axis: time, Y axis: all car's average speed
 def plot_average_speed(steps, dt, lane):
     
     avg_speeds = np.zeros((steps, ))
@@ -96,6 +97,7 @@ def plot_average_speed(steps, dt, lane):
     plt.plot(avg_speeds)
     plt.show()
 
+# For one simulation of one lane, the number of accidents and total flux.
 def flux_and_accidents(steps, dt, lane):
 
     total_flux, total_accidents = 0, 0
