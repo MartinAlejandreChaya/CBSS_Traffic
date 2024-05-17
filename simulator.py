@@ -13,7 +13,8 @@ def simulate_lane(lane, steps, dt, width, height, frame_rate):
     # Create window
     win = GraphWin(lane.name, width, height)
 
-    frame_time = 1/frame_rate
+    if (frame_rate != False):
+        frame_time = 1/frame_rate
 
     width_transform = width / lane.length
     height_mid = height/2
@@ -31,7 +32,6 @@ def simulate_lane(lane, steps, dt, width, height, frame_rate):
 
     total_flux = 0
     total_accidents = 0
-    input("Press enter to start animation")
     for i in range(steps):
         # Get the ammount moved by each car
         positions, speeds, n_accidents, flux = lane.step(dt)
@@ -44,18 +44,21 @@ def simulate_lane(lane, steps, dt, width, height, frame_rate):
         total_flux += flux
         total_accidents += n_accidents
 
-        time.sleep(frame_time)
+        if (frame_rate != False):
+            time.sleep(frame_time)
 
     print("\nLane: ", lane.name)
     print("Total flux: ", total_flux)
     print("Total accidents: ", total_accidents)
 
-    input("\nPress enter to close the window")
+    print("\nFlux / time: ", total_flux / (steps * dt))
+    print("\nAccidents / time: ", total_accidents / (steps * dt))
+
     win.close()    # Close window when done
 
 
 # phantom jams y todo eso
-def plot_positions(steps, dt, lane):
+def plot_positions(steps, dt, lane, linewidth = 2):
 
     t = 0
     prev_positions = lane.get_positions()
@@ -73,7 +76,7 @@ def plot_positions(steps, dt, lane):
             if (positions[j] < prev_positions[j]):
                 continue
             # Plot line for rest of the cars
-            plt.plot([prev_positions[j], positions[j]], [t-dt, t], 'black')
+            plt.plot([prev_positions[j], positions[j]], [t-dt, t], 'black', linewidth=linewidth)
         
         prev_positions = positions
 
@@ -110,4 +113,27 @@ def flux_and_accidents(steps, dt, lane):
         total_flux += flux
 
 
-    return total_flux, total_accidents
+    return total_flux, total_accidents, total_flux / (steps*dt), total_accidents / (steps * dt)
+
+
+def noises_flux(steps, dt, lane, noises):
+
+    fluxes = np.zeros((len(noises), ))
+    accidents = np.zeros((len(noises), ))
+
+    # For each of the noises
+    for n in range(len(noises)):
+        lane.noise = noises[n]
+        # Run the simulation and compute the flux and accidents.
+        total_flux, total_accidents = 0, 0
+        for i in range(steps):
+            # Get the ammount moved by each car
+            positions, speeds, n_accidents, flux = lane.step(dt)
+
+            total_accidents += n_accidents
+            total_flux += flux
+        
+        fluxes[n] = total_flux / (steps * dt)
+        accidents[n] = total_accidents / (steps * dt)
+
+    return fluxes, accidents

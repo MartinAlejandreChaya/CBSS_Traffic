@@ -69,10 +69,11 @@ class OneLaneCar:
             return self.pos, 0, accident_in_this_frame, False
         
         # Introduce noise in to the reading
-        if (noise and noise["read"]):
-            if (np.random.rand() < noise["read"]["prob"]):
-                dist += (np.random.rand()*2-1) * noise["read"]["mag"]
-                front_speed += (np.random.rand()*2-1) * noise["read"]["sp_mag"]
+        if (noise):
+            if (np.random.rand() < noise["dist"]["prob"]):
+                dist += (np.random.rand()*2-1) * noise["dist"]["mag"]
+            if (np.random.rand() < noise["speed"]["prob"]):
+                front_speed += (np.random.rand()*2-1) * noise["speed"]["mag"]
 
 
         if (self.mode == "safe"):
@@ -124,15 +125,6 @@ class OneLaneCar:
 
         # Limit acceleration 
         self.acc = max(min(target_acc, self.max_acc), self.min_acc)
-
-        # introduce noise into the writting
-        if (noise and noise["write"]):
-            # Randomly brake completely
-            if (np.random.rand() < noise["write"]["brake_prob"]):
-                self.acc = self.min_acc
-            # Otherwise, random fluctuations
-            elif (np.random.rand() < noise["write"]["prob"]):
-                self.acc += (np.random.rand()*2-1) * noise["write"]["mag"]
         
         # update speed
         target_speed = self.speed + self.acc * dt
